@@ -1,8 +1,12 @@
 # **COVID-19 scRNA‑seq Analysis Pipeline**
 
-This repository contains a full single‑cell RNA‑sequencing (scRNA‑seq) analysis pipeline used to profile airway epithelial responses to SARS‑CoV‑2 infection. The workflow includes preprocessing, quality control, normalization, clustering, annotation, differential expression analysis, and pseudotime inference.
+**Reference:** PLOS Biology (2021) - Trajectory analysis of SARS-CoV-2-infected human bronchial epithelial cells.
 
-Below are explanations of the analytical steps and interpretation of the biological findings based on the Project.
+**Data Source:  
+**GSE166766 (MTX + TSV files)
+
+**Objective:  
+**Reproduce the neighbourhood clustering, cell type identification, and infection-related dynamics described in the paper (Figures 1G(i-iii), 3A, 3B, 4A, 4B). Perform pseudotime analysis to order SARS-CoV-2 infection and differentiation states.
 
 ## **Project Overview**
 
@@ -18,137 +22,99 @@ This project analyzes airway epithelial cells across mock and SARS‑CoV‑2-inf
 
 - Marker‑based cell type annotation  
 
-- Coronavirus‑relevant gene expression (ACE2, ANPEP, CLTRN, DPP4)  
-
 - Pseudotime reconstruction  
 
 - Interpretation of viral infection dynamics  
 
-## **Cell Types Identified at Different Stages of Infection**
+## **1\. Cell Types Identified at Different Stages of Infection**
 
-Based on clustering and marker-gene expression, the dataset consists primarily of:
+The dataset consistently contained the following epithelial populations:
 
-### Ciliated Cells
+- Ciliated cells
+- Gastric chief cells
+- Ionocytes
+- Goblet cells
+- Enteric neurons
+- Enteroendocrine cells
+- Tuft cells
+- Clara cells  
 
-- High expression of _FOXJ1_, _PIFO_, _TPPP3_, _RSPH1  
-    _
-- Abundant across all time points  
+### **2\. Why do these cell types correlate with COVID-19 infection?**
 
-- Ciliated cells are known to be primary targets of SARS‑CoV‑2 due to ACE2 and TMPRSS2 expression.  
+SARS-CoV-2 primarily targets airway epithelial cells that express **ACE2** and **TMPRSS2**. In this dataset:
 
-### Secretory/Goblet‑like Cells _(if present in dataset)_
+- **Ciliated cells** are the main targets, showing high ACE2/TMPRSS2 expression and sustaining viral replication.
+- **Goblet and Clara cells** are moderately permissive and contribute to mucus secretion and epithelial repair.
+- **Ionocytes and Tuft cells** may not be heavily infected but can play supportive roles in immune signaling and airway homeostasis.
+- Rare or non-airway cells (gastric chief, enteric neurons, enteroendocrine cells) likely reflect transitional states or annotation overlaps and are not primary infection sites.
 
-- _MUC1_, _MUC4_, _SPDEF_ markers  
+Overall, infection susceptibility aligns with ACE2/TMPRSS2 expression and the functional role of each epithelial cell type, explaining why ciliated and secretory cells dominate viral tropism while other cells respond indirectly.  
 
-- Can participate in mucosal immunity and may show altered transcription during infection.  
+## **3\. Is ACE2 a Good Marker for Tracking Infection in This Dataset?**
 
-### Basal/Progenitor‑like Cells _(if detected via pseudotime)_
+Not really.
 
-- _KRT5_, _KRT14_, _TP63  
-    _
-- These often appear early in pseudotime trajectories.  
+In this dataset, viral RNA and ACE2 levels do not correlate strongly.
 
-### **Why These Cell Types Correlate with COVID‑19 Infection**
+- ACE2 is expressed in only a small subset of epithelial cells.
+- Many ACE2-positive cells do not contain viral reads.
+- Many infected cells have low or undetectable ACE2, likely due to: viral-induced ACE2 downregulation, and/or infection occurring via alternate or transient expression states.
 
-- Ciliated epithelium is the dominant portal of entry for SARS‑CoV‑2.  
+In conclusion: ACE2 is a good susceptibility marker, not a reliable infection-progress marker.
 
-- Viral replication disrupts cilia integrity, which explains transcriptional reprogramming.  
+## **4\. Difference Between ENO2 and ACE2 as Biomarkers (Comparing Two Studies)**
 
-- Secretory cells modulate immune signaling and may show bystander activation.  
+**ACE2**
 
-- Basal/progenitor cells appear during epithelium repair during later infection stages.  
+- Entry receptor required for viral uptake.
+- Sparse expression, high cell-type specificity.
+- Not induced during infection; often downregulated.
 
-## **Is ACE2 a Good Marker for Tracking Infection in This Dataset?**
+**ENO2**
 
-Not reliably.
+- A stress- and infection-induced metabolic marker.
+- Strongly upregulated in infected cells.
+- Correlates with viral RNA abundance.
+- Better at distinguishing **actively infected** versus **bystander** cells.
 
-Based on the dataset:
+**Summary:  
+**_ACE2 = susceptibility marker_
 
-- ACE2 expression is sparse and low, consistent with published human airway datasets.  
+_ENO2 = infection/progression marker_  
 
-- ACE2 does not significantly increase at 1-3 dpi.  
+### **5\. Which cell cluster has the highest abundance of ACE2 expression after 3 dpi, and what does that mean biologically?**
 
-- SARS‑CoV‑2 infection is not accompanied by ACE2 upregulation.  
+Based on the reprocessed clustering:
 
-- ACE2 cannot distinguish infected vs. bystander vs. uninfected cells.  
+- The Ciliated cell cluster shows the highest ACE2 abundance at 3 dpi.
 
-Therefore, ACE2 is not a reliable biomarker for infection progression in this dataset.
+Biological Interpretation:
 
-This is consistent with reports showing that SARS‑CoV‑2 infection often _reduces_ ACE2 expression post‑entry.
+- Even though ACE2 expression may decrease upon infection, the remaining detectable ACE2 is still concentrated in ciliated epithelial cells.
+- This supports the model that ciliated cells remain the primary viral reservoir throughout the infection course.
+- At 3 dpi, high ACE2 in these cells corresponds to:
+  - higher viral RNA loads
+  - strong ISG responses
+  - epithelial damage and dedifferentiation
 
-##
+In visual UMAPs, this appears as **ACE2-positive "hot spots"** localised within the ciliated cluster.  
 
-## Difference Between ENO2 and ACE2 as Biomarkers (Comparing Two Studies)
+**Repository Structure**
 
-###
+├── data/
 
-| ACE2 | ENO2 |
-| --- | --- |
-| Viral entry receptor | Metabolic/activation marker in some infection models |
-| --- | --- |
-| Lowly expressed | Increases with cell stress and viral replication |
-| --- | --- |
-| Not strongly induced during infection | More detectable across cell populations |
-| --- | --- |
-| Poor at distinguishing infection sites |     |
-| --- | --- |
+│ └── GSE166766_raw/
 
-Interpretation:
+│ ├── 01_preprocessing.ipynb
 
-- ENO2 reflects infection‑induced metabolic change, while ACE2 reflects susceptibility, not infection load.  
+│ ├── 02_clustering_annotation.ipynb
 
-- ENO2 is a more robust indicator of infection‑related signaling in some published studies.  
+│ ├── 03_trajectory_pseudotime.ipynb
 
-Pseudotime Analysis
+│ └── 04_biomarker_analysis.ipynb
 
-The pseudotime ordering reveals:
+├── README.md
 
-- Early pseudotime: basal/progenitor‑like cells (KRT5+ TP63+)  
+- Citation
 
-- Mid trajectory: differentiating secretory cells  
-
-- Late pseudotime: mature ciliated cells (FOXJ1+ TPPP3+)  
-
-This trajectory reflects airway epithelial maturation.
-
-In infected samples (if available), pseudotime often shifts, indicating:
-
-- Loss of ciliated identity  
-
-- Stress‑driven transcriptional rewiring  
-
-- Dedifferentiation or regeneration responses  
-
-## **Which Cell Cluster Has the Highest ACE2 Expression After 3 dpi?**
-
-Across mock and infected samples, ACE2 expression remains low, but a small subset of ciliated cells shows detectable expression. After 3 dpi, the cluster with the highest ACE2 signal is a ciliated subcluster enriched for FOXJ1 / TPPP3 expression.  
-
-### Biological Meaning (Visual Interpretation)
-
-- Ciliated cells remain the major ACE2‑positive population.  
-
-- Even at 3 dpi, ACE2 expression does not meaningfully increase → infection does not induce ACE2.  
-
-- ACE2‑high cells represent a small susceptible minority, not a widespread upregulated response.  
-
-- The persistence of ACE2 in this subcluster indicates that infection selectively impacts already‑susceptible cells, rather than expanding ACE2 expression.  
-
-## **Summary**
-
-- The dataset is dominated by ciliated cells, the known target of SARS‑CoV‑2.  
-
-- ACE2 is expressed in only a small subset and does not correlate with infection progression.  
-
-- ENO2 provides a metabolic context not captured by ACE2.  
-
-- Pseudotime indicates differentiation from basal to secretory to ciliated epithelium.  
-
-- ACE2‑high cells at 3 dpi remain confined to a specific ciliated cluster, reflecting susceptibility rather than response.  
-
-Repository Contents
-
-- analysis.ipynb - Main pipeline  
-
-- data/ - Raw and processed AnnData files  
-
-- figures/ - UMAPs, heatmaps, pseudotime plots
+Ravindra, N. G., Alfajaro, M. M., Gasque, V., Huston, N. C., Wan, H., Szigeti-Buck, K., Yasumoto, Y., Greaney, A. M., Habet, V., Chow, R. D., Chen, J. S., Wei, J., Filler, R. B., Wang, B., Wang, G., Niklason, L. E., Montgomery, R. R., Eisenbarth, S. C., Chen, S., Williams, A., … Wilen, C. B. (2021). Single-cell longitudinal analysis of SARS-CoV-2 infection in human airway epithelium identifies target cells, alterations in gene expression, and cell state changes. _PLoS biology_, _19_(3), e3001143. <https://doi.org/10.1371/journal.pbio.3001143>
